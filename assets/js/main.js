@@ -298,9 +298,10 @@ function escapeHtml(text) {
 /**
  * 渲染單張個人名片頁面
  * 清空名片容器並將單一名片資料渲染為完成品名片
+ * @param {Object} [card] - 要渲染的名片資料，未提供則使用 MOCK_CARD
  * @returns {void}
  */
-function renderSingleCardPage() {
+function renderCardPage(card) {
   const container = document.getElementById('cardContainer');
 
   if (!container) {
@@ -311,7 +312,7 @@ function renderSingleCardPage() {
   container.innerHTML = '';
 
   try {
-    const cardElement = renderCard(MOCK_CARD);
+    const cardElement = renderCard(card || MOCK_CARD);
     container.appendChild(cardElement);
   } catch (error) {
     console.error('渲染名片時發生錯誤：', handleError(error));
@@ -324,11 +325,26 @@ function renderSingleCardPage() {
 // ============================================
 
 /**
- * 初始化頁面：建立單張個人名片完成品頁面
- * @returns {void}
+ * 初始化頁面：先嘗試從 API 讀取名片資料，失敗時使用本地 Mock 資料
+ * @returns {Promise<void>}
  */
-function init() {
-  renderSingleCardPage();
+async function init() {
+  try {
+    const config = await loadApiConfig('assets/config/api.json');
+    const response = await callApi(config.apiUrl, 'get', {});
+
+    if (response.status === 'success' && response.data) {
+      const apiCard = response.data;
+      renderCardPage(apiCard);
+      return;
+    }
+
+    console.warn('API 回應狀態非 success，改用本地 Mock 資料');
+    renderCardPage(MOCK_CARD);
+  } catch (error) {
+    console.warn('從 API 載入名片失敗，改用本地 Mock 資料：', handleError(error));
+    renderCardPage(MOCK_CARD);
+  }
 }
 
 // 等待 DOM 載入完成後初始化

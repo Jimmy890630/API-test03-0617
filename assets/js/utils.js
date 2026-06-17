@@ -223,6 +223,73 @@ function escapeVCardValue(value) {
 }
 
 /**
+ * 載入 API 設定檔
+ * @param {string} configPath - 設定檔路徑
+ * @returns {Promise<Object>} 解析後的設定物件，包含 apiUrl
+ * @example
+ * const config = await loadApiConfig('assets/config/api.json');
+ * console.log(config.apiUrl);
+ */
+async function loadApiConfig(configPath = 'assets/config/api.json') {
+  try {
+    const response = await fetch(configPath, {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+
+    if (!response.ok) {
+      throw new Error(`無法載入 API 設定檔：HTTP ${response.status}`);
+    }
+
+    const config = await response.json();
+
+    if (!config || typeof config.apiUrl !== 'string' || config.apiUrl.trim() === '') {
+      throw new Error('API 設定檔格式錯誤：缺少有效的 apiUrl');
+    }
+
+    return config;
+  } catch (error) {
+    console.error(handleError(error, '載入 API 設定檔失敗'));
+    throw error;
+  }
+}
+
+/**
+ * 發送 API 請求並解析回應
+ * 所有 API 請求統一使用 POST，並遵循 docs/04-api-spec.md 規格
+ * @param {string} apiUrl - API 基底位址
+ * @param {string} action - 動作名稱，例如 "get"、"update"
+ * @param {Object} [data={}] - 請求資料
+ * @returns {Promise<Object>} 後端回應物件
+ * @example
+ * const response = await callApi(apiUrl, 'get', {});
+ * if (response.status === 'success') { ... }
+ */
+async function callApi(apiUrl, action, data = {}) {
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({ action, data })
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.message || `API 請求失敗：HTTP ${response.status}`);
+    }
+
+    return result;
+  } catch (error) {
+    console.error('API 請求失敗：', handleError(error));
+    throw error;
+  }
+}
+
+/**
  * 觸發下載 vCard 檔案
  * @param {Object} card - 名片資料物件
  * @param {string} [filename] - 檔案名稱
