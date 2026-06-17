@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <!--
+    金屬加工名片系統 - 入口頁
+    檔案：index.html
+    用途：展示名片卡片列表，使用本地樣板資料渲染，不請求 API
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="金屬加工產業名片展示系統">
+  <title>金屬加工名片系統</title>
+  <!-- 全站基礎樣式 -->
+  <link rel="stylesheet" href="assets/css/main.css">
+  <!-- 名片元件樣式 -->
+  <link rel="stylesheet" href="assets/css/card.css">
+</head>
+<body>
+  <!-- 頁首：系統名稱與副標 -->
+  <header class="page-header">
+    <h1 class="page-header__title">金屬加工名片系統</h1>
+    <p class="page-header__subtitle">專業金屬加工服務名片展示平台</p>
+  </header>
+
+  <!-- 主要內容：名片卡片網格 -->
+  <main class="page-main">
+    <section aria-label="名片列表">
+      <!-- 此容器由 main.js 填入名片卡片 -->
+      <div id="cardContainer" class="card-grid"></div>
+    </section>
+  </main>
+
+  <!-- 頁尾：版權資訊 -->
+  <footer class="page-footer">
+    <p>© 2026 金屬加工名片系統．範本資料僅供展示使用</p>
+  </footer>
+
+  <!-- 共用工具方法，須先載入以確保 main.js 可用 -->
+  <script src="assets/js/utils.js"></script>
+  <!-- 頁面主要邏輯 -->
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
