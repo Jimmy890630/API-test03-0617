@@ -26,6 +26,15 @@
   - `assets/js/main.js`：樣板資料與名片渲染邏輯，目前不透過網路請求 API。
 - **樣板資料**：內建 5 筆金屬加工產業名片，涵蓋必填與選填欄位。
 
+### 2026-06-17（續 - Skill 安裝）
+
+- **安裝全域 skill `ui-ux-pro-max`**：
+  - Clone GitHub repo 至 `/Users/lgimmy405/Documents/Cline/MCP/ui-ux-pro-max`。
+  - 安裝 `uipro-cli`（v2.2.3），發現該版本不支援 `--global` 選項。
+  - 改為手動將 repo 內 `.claude/skills/ui-ux-pro-max/` 複製到 `~/.claude/skills/ui-ux-pro-max/`，實現全域可用。
+  - 修正 skill 內 `data` 與 `scripts` 的 symlink，改為從 `src/ui-ux-pro-max/` 複製實際資料夾，避免路徑失效。
+- **測試 skill**：執行 `search.py` 與設計系統生成功能均正常運作。
+
 ---
 
 ## 開發原則備註
