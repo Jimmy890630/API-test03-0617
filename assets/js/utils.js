@@ -1,7 +1,7 @@
 /**
  * 金屬加工名片系統 - 共用工具函式
  * 檔案：assets/js/utils.js
- * 用途：提供格式化、驗證、DOM 輔助與錯誤處理等可重複使用方法
+ * 用途：提供格式化、驗證、DOM 輔助、錯誤處理與 vCard 匯出等可重複使用方法
  */
 
 /**
@@ -19,17 +19,14 @@
 function createElement(tag, options = {}) {
   const element = document.createElement(tag);
 
-  // 設定 CSS 類別
   if (options.className) {
     element.className = options.className;
   }
 
-  // 設定文字內容
   if (options.textContent !== undefined && options.textContent !== null) {
     element.textContent = options.textContent;
   }
 
-  // 設定 HTML 屬性
   if (options.attributes && typeof options.attributes === 'object') {
     Object.entries(options.attributes).forEach(([key, value]) => {
       element.setAttribute(key, value);
@@ -53,12 +50,10 @@ function formatPhone(phone) {
 
   const digits = phone.replace(/\D/g, '');
 
-  // 行動電話：以 09 開頭，共 10 碼
   if (/^09\d{8}$/.test(digits)) {
     return digits.replace(/^(\d{4})(\d{3})(\d{3})$/, '$1-$2-$3');
   }
 
-  // 市話：以 0 開頭，總長度 9 或 10 碼，此處採用 2-4-4 分組
   if (/^0\d{8,9}$/.test(digits)) {
     return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '$1-$2-$3');
   }
@@ -154,4 +149,105 @@ function isValidEmail(email) {
 function isValidPhone(phone) {
   const digits = String(phone || '').replace(/\D/g, '');
   return /^(09\d{8}|0\d{8,9})$/.test(digits);
+}
+
+/**
+ * 將名片物件轉換為 vCard 3.0 文字內容
+ * @param {Object} card - 名片資料物件
+ * @param {string} card.name - 姓名
+ * @param {string} card.company - 公司名稱
+ * @param {string} [card.title] - 職稱
+ * @param {string} [card.phone] - 電話
+ * @param {string} [card.email] - 信箱
+ * @param {string} [card.line_id] - LINE ID
+ * @param {string[]} [card.services] - 服務項目
+ * @param {string} [card.tax_id] - 統編
+ * @param {string} [card.fax] - 傳真
+ * @returns {string} vCard 文字內容
+ */
+function createVCardString(card) {
+  const lines = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `N:;${escapeVCardValue(card.name)};;;`,
+    `FN:${escapeVCardValue(card.name)}`
+  ];
+
+  if (card.company) {
+    lines.push(`ORG:${escapeVCardValue(card.company)}`);
+  }
+
+  if (card.title) {
+    lines.push(`TITLE:${escapeVCardValue(card.title)}`);
+  }
+
+  if (card.phone) {
+    lines.push(`TEL;TYPE=CELL,VOICE:${escapeVCardValue(card.phone)}`);
+  }
+
+  if (card.fax) {
+    lines.push(`TEL;TYPE=FAX:${escapeVCardValue(card.fax)}`);
+  }
+
+  if (card.email) {
+    lines.push(`EMAIL;TYPE=WORK:${escapeVCardValue(card.email)}`);
+  }
+
+  const notes = [];
+  if (card.line_id) notes.push(`LINE ID：${card.line_id}`);
+  if (Array.isArray(card.services) && card.services.length > 0) {
+    notes.push(`服務項目：${card.services.join('、')}`);
+  }
+  if (card.tax_id) notes.push(`統編：${formatTaxId(card.tax_id)}`);
+
+  if (notes.length > 0) {
+    lines.push(`NOTE:${escapeVCardValue(notes.join('\\n'))}`);
+  }
+
+  lines.push('END:VCARD');
+  return lines.join('\r\n');
+}
+
+/**
+ * 轉義 vCard 特殊字元
+ * @param {string} value - 原始文字
+ * @returns {string} 轉義後文字
+ */
+function escapeVCardValue(value) {
+  return String(value || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,')
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
+}
+
+/**
+ * 觸發下載 vCard 檔案
+ * @param {Object} card - 名片資料物件
+ * @param {string} [filename] - 檔案名稱
+ * @returns {boolean} 下載是否成功觸發
+ */
+function downloadVCard(card, filename) {
+  if (!card || !card.name) return false;
+
+  const vCardString = createVCardString(card);
+  const blob = new Blob([vCardString], { type: 'text/vcard;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const safeName = String(filename || `${card.name} 名片`).replace(/\s+/g, '_');
+
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `${safeName}.vcf`;
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+
+  // 清理資源
+  requestAnimationFrame(() => {
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  });
+
+  return true;
 }

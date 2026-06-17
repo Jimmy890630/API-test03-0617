@@ -8,34 +8,45 @@
     用途：展示單張個人名片完成品，使用本地樣板資料渲染，不請求 API
   -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="金屬加工產業個人名片展示">
-  <title>金屬加工名片系統</title>
+  <meta name="description" content="金鋒金屬加工有限公司 - 業務經理 王小明 數位名片">
+  <meta name="theme-color" content="#0f172a">
+  <title>王小明 - 金鋒金屬加工有限公司 | 數位名片</title>
+
   <!-- 預先連線 Google Fonts 以加速字體載入 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <!-- 全站基礎樣式 -->
   <link rel="stylesheet" href="assets/css/main.css">
   <!-- 名片元件樣式 -->
   <link rel="stylesheet" href="assets/css/card.css">
 </head>
 <body>
-  <!-- 頁首：系統名稱與副標 -->
+  <!-- 頁首：品牌標記與系統名稱 -->
   <header class="page-header">
+    <div class="page-header__brand" aria-hidden="true">
+      <svg class="page-header__mark" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="14" width="6" height="14" rx="1" fill="currentColor"/>
+        <rect x="13" y="8" width="6" height="20" rx="1" fill="currentColor"/>
+        <rect x="24" y="2" width="6" height="26" rx="1" fill="currentColor"/>
+      </svg>
+    </div>
     <h1 class="page-header__title">金屬加工名片系統</h1>
-    <p class="page-header__subtitle">專業金屬加工服務名片</p>
+    <p class="page-header__subtitle">專業金屬加工服務聯絡窗口</p>
   </header>
 
-  <!-- 主要內容：名片卡片網格 -->
-  <main class="page-main">
+  <!-- 主要內容：名片卡片 -->
+  <main class="page-main" id="mainContent">
     <section aria-label="名片內容">
       <!-- 此容器由 main.js 填入名片卡片 -->
-      <div id="cardContainer" class="card-grid"></div>
+      <div id="cardContainer" class="card-stage"></div>
     </section>
   </main>
 
   <!-- 頁尾：版權資訊 -->
   <footer class="page-footer">
-    <p>© 2026 金屬加工名片系統．範本資料僅供展示使用</p>
+    <p>© 2026 金鋒金屬加工有限公司．範本資料僅供展示使用</p>
   </footer>
 
   <!-- 共用工具方法，須先載入以確保 main.js 可用 -->

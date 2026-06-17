@@ -27,41 +27,63 @@ const MOCK_CARD = {
 };
 
 // ============================================
-// 2. 名片渲染函式
+// 2. SVG 圖示定義
+// ============================================
+
+const ICONS = {
+  phone: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>',
+  email: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>',
+  line: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+  download: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>',
+  share: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>'
+};
+
+// ============================================
+// 3. 名片渲染函式
 // ============================================
 
 /**
  * 建立單個聯絡資訊項目
- * @param {string} href - 連結網址，若無連結則傳入空字串
- * @param {string} iconSvg - SVG 圖示字串
- * @param {string} text - 顯示文字
+ * @param {Object} options - 設定物件
+ * @param {string} options.href - 連結網址，若無連結則傳入空字串
+ * @param {string} options.iconSvg - SVG 圖示字串
+ * @param {string} options.label - 欄位標籤，例如「電話」
+ * @param {string} options.value - 顯示文字
+ * @param {boolean} [options.wide=false] - 是否在大螢幕佔滿整列
  * @returns {HTMLLIElement} 聯絡資訊 li 元素
  */
-function createContactItem(href, iconSvg, text) {
+function createContactItem({ href, iconSvg, label, value, wide = false }) {
   const item = createElement('li', {
-    className: 'business-card__contact-item'
+    className: `business-card__contact-item${wide ? ' business-card__contact-item--wide' : ''}`
   });
 
-  // 插入圖示
   const iconWrapper = createElement('span', {
     className: 'business-card__contact-icon'
   });
   iconWrapper.innerHTML = iconSvg;
   item.appendChild(iconWrapper);
 
-  // 有連結時顯示為 a，無連結時顯示為 span
-  if (href) {
-    const link = createElement('a', {
-      className: 'business-card__contact-link',
-      attributes: { href: href, target: '_blank', rel: 'noopener noreferrer' },
-      textContent: text
-    });
-    item.appendChild(link);
-  } else {
-    const span = createElement('span', { textContent: text });
-    item.appendChild(span);
-  }
+  const info = createElement('div', { className: 'business-card__contact-info' });
 
+  const labelEl = createElement('span', {
+    className: 'business-card__contact-label',
+    textContent: label
+  });
+  info.appendChild(labelEl);
+
+  const valueEl = href
+    ? createElement('a', {
+        className: 'business-card__contact-value',
+        attributes: { href, target: '_blank', rel: 'noopener noreferrer' },
+        textContent: value
+      })
+    : createElement('span', {
+        className: 'business-card__contact-value',
+        textContent: value
+      });
+  info.appendChild(valueEl);
+
+  item.appendChild(info);
   return item;
 }
 
@@ -71,90 +93,207 @@ function createContactItem(href, iconSvg, text) {
  * @returns {HTMLElement} 渲染完成的名片卡片元素
  */
 function renderCard(card) {
-  // 建立卡片容器
+  const safeCard = card || {};
+  const name = safeCard.name || '未提供姓名';
+  const company = safeCard.company || '未提供公司';
+  const title = safeCard.title || '';
+
   const cardElement = createElement('article', {
-    className: 'business-card',
-    attributes: { 'data-card-id': card.card_id || '' }
+    className: 'business-card business-card--animate',
+    attributes: {
+      'data-card-id': safeCard.card_id || '',
+      'aria-labelledby': 'cardName cardCompany'
+    }
   });
 
   // 頂部：公司名稱與職稱
   const header = createElement('header', { className: 'business-card__header' });
-  const company = createElement('h2', {
+  const companyGroup = createElement('div', { className: 'business-card__company-group' });
+  const companyEl = createElement('h2', {
+    id: 'cardCompany',
     className: 'business-card__company',
-    textContent: card.company || ''
+    textContent: company
   });
-  const title = createElement('p', {
-    className: 'business-card__title',
-    textContent: card.title || ''
-  });
-  header.appendChild(company);
-  header.appendChild(title);
+  companyGroup.appendChild(companyEl);
+
+  if (title) {
+    const titleEl = createElement('p', {
+      className: 'business-card__title',
+      textContent: title
+    });
+    companyGroup.appendChild(titleEl);
+  }
+
+  header.appendChild(companyGroup);
   cardElement.appendChild(header);
 
-  // 主體：姓名
+  // 主體：姓名與聯絡資訊
   const body = createElement('div', { className: 'business-card__body' });
-  const name = createElement('h3', {
+  const nameEl = createElement('h1', {
+    id: 'cardName',
     className: 'business-card__name',
-    textContent: card.name || ''
+    textContent: name
   });
-  body.appendChild(name);
+  body.appendChild(nameEl);
 
-  // 聯絡資訊列表
+  const roleNote = createElement('p', {
+    className: 'business-card__role-note',
+    textContent: '如有任何金屬加工需求，歡迎直接聯繫'
+  });
+  body.appendChild(roleNote);
+
   const contactList = createElement('ul', { className: 'business-card__contact-list' });
 
-  // 電話圖示：簡約電話 icon
-  const phoneIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>';
-  contactList.appendChild(
-    createContactItem(
-      card.phone ? `tel:${card.phone}` : '',
-      phoneIcon,
-      formatPhone(card.phone) || '未提供電話'
-    )
-  );
+  if (safeCard.phone) {
+    contactList.appendChild(
+      createContactItem({
+        href: `tel:${safeCard.phone}`,
+        iconSvg: ICONS.phone,
+        label: '電話',
+        value: formatPhone(safeCard.phone),
+        wide: false
+      })
+    );
+  }
 
-  // 信箱圖示
-  const emailIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>';
-  contactList.appendChild(
-    createContactItem(
-      card.email ? `mailto:${card.email}` : '',
-      emailIcon,
-      card.email || '未提供信箱'
-    )
-  );
+  if (safeCard.email) {
+    contactList.appendChild(
+      createContactItem({
+        href: `mailto:${safeCard.email}`,
+        iconSvg: ICONS.email,
+        label: '電子信箱',
+        value: safeCard.email,
+        wide: true
+      })
+    );
+  }
 
-  // LINE ID 圖示：使用對話氣泡
-  const lineIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
-  const lineText = card.line_id ? `LINE：${card.line_id}` : '未提供 LINE ID';
-  contactList.appendChild(createContactItem('', lineIcon, lineText));
+  if (safeCard.line_id) {
+    contactList.appendChild(
+      createContactItem({
+        href: '',
+        iconSvg: ICONS.line,
+        label: 'LINE ID',
+        value: safeCard.line_id,
+        wide: false
+      })
+    );
+  }
 
   body.appendChild(contactList);
   cardElement.appendChild(body);
 
-  // 底部：服務標籤與輔助資訊
+  // 底部：服務標籤、輔助資訊與行動按鈕
   const footer = createElement('div', { className: 'business-card__footer' });
-  const servicesContainer = createElement('div', { className: 'business-card__services' });
-  if (Array.isArray(card.services) && card.services.length > 0) {
-    renderServices(card.services, servicesContainer);
+
+  const servicesContainer = createElement('div', {
+    className: 'business-card__services',
+    attributes: { 'aria-label': '服務項目' }
+  });
+  if (Array.isArray(safeCard.services) && safeCard.services.length > 0) {
+    renderServices(safeCard.services, servicesContainer);
   }
   footer.appendChild(servicesContainer);
 
   const meta = createElement('div', { className: 'business-card__meta' });
-  if (card.tax_id) {
+
+  if (safeCard.tax_id) {
     const tax = createElement('span', {
-      textContent: `統編：${formatTaxId(card.tax_id)}`
+      className: 'business-card__meta-item',
+      attributes: { 'aria-label': `統一編號 ${formatTaxId(safeCard.tax_id)}` }
     });
+    tax.innerHTML = `<span class="business-card__meta-label">統編</span>${formatTaxId(safeCard.tax_id)}`;
     meta.appendChild(tax);
   }
-  if (card.fax) {
+
+  if (safeCard.fax) {
     const fax = createElement('span', {
-      textContent: `傳真：${formatFax(card.fax)}`
+      className: 'business-card__meta-item',
+      attributes: { 'aria-label': `傳真 ${formatFax(safeCard.fax)}` }
     });
+    fax.innerHTML = `<span class="business-card__meta-label">傳真</span>${formatFax(safeCard.fax)}`;
     meta.appendChild(fax);
   }
+
   footer.appendChild(meta);
+
+  const actions = createElement('div', { className: 'business-card__actions' });
+
+  const saveButton = createElement('button', {
+    className: 'business-card__action business-card__action--primary',
+    attributes: { type: 'button' },
+    textContent: '儲存聯絡人'
+  });
+  saveButton.insertAdjacentHTML('afterbegin', ICONS.download);
+  saveButton.addEventListener('click', () => {
+    try {
+      const success = downloadVCard(safeCard, `${safeCard.name}_名片`);
+      if (!success) {
+        window.alert('無法產生聯絡人檔案，請確認名片資料完整。');
+      }
+    } catch (error) {
+      console.error('下載 vCard 失敗：', handleError(error));
+      window.alert('下載失敗，請稍後再試。');
+    }
+  });
+  actions.appendChild(saveButton);
+
+  const shareButton = createElement('button', {
+    className: 'business-card__action business-card__action--secondary',
+    attributes: { type: 'button' },
+    textContent: '分享名片'
+  });
+  shareButton.insertAdjacentHTML('afterbegin', ICONS.share);
+  shareButton.addEventListener('click', async () => {
+    try {
+      const shareText = `${name} - ${company}${title ? ` (${title})` : ''}\n電話：${formatPhone(safeCard.phone) || '未提供'}`;
+      if (navigator.share) {
+        await navigator.share({
+          title: `${name} 數位名片`,
+          text: shareText,
+          url: window.location.href
+        });
+      } else {
+        await navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
+        window.alert('名片連結與資訊已複製到剪貼簿');
+      }
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('分享名片失敗：', handleError(error));
+      }
+    }
+  });
+  actions.appendChild(shareButton);
+
+  footer.appendChild(actions);
   cardElement.appendChild(footer);
 
   return cardElement;
+}
+
+/**
+ * 渲染錯誤提示
+ * @param {string} message - 錯誤訊息
+ * @returns {HTMLElement} 錯誤提示元素
+ */
+function renderError(message) {
+  const errorEl = createElement('div', {
+    className: 'business-card business-card--error',
+    attributes: { role: 'alert' }
+  });
+  errorEl.innerHTML = `<strong>名片載入失敗</strong>${escapeHtml(message)}`;
+  return errorEl;
+}
+
+/**
+ * 將特殊字元轉為 HTML 實體，避免 XSS
+ * @param {string} text - 原始文字
+ * @returns {string} 轉義後文字
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
 }
 
 /**
@@ -170,20 +309,19 @@ function renderSingleCardPage() {
     return;
   }
 
-  // 清空容器現有內容
   container.innerHTML = '';
 
-  // 渲染單一張個人名片
   try {
     const cardElement = renderCard(MOCK_CARD);
     container.appendChild(cardElement);
   } catch (error) {
     console.error('渲染名片時發生錯誤：', handleError(error));
+    container.appendChild(renderError(handleError(error, '無法顯示名片，請重新整理頁面。')));
   }
 }
 
 // ============================================
-// 3. 頁面初始化
+// 4. 頁面初始化
 // ============================================
 
 /**
@@ -191,7 +329,6 @@ function renderSingleCardPage() {
  * @returns {void}
  */
 function init() {
-  // 使用本地樣板資料直接渲染單張名片，不發送 API 請求
   renderSingleCardPage();
 }
 
