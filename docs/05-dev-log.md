@@ -45,6 +45,16 @@
 - **不讀取 API**：頁面持續使用本地樣板資料，未串接 API。
 - **後台表單未建立**：依指示暫不設計表單。
 
+### 2026-06-17（續 - 運用 skill 重寫設計）
+
+- **建立 PRODUCT.md**：透過 impeccable `init` 流程，確認專案定位為 brand（展示型名片頁面），並記錄使用者、目的、品牌個性（專業、穩重、精準）、反參考與設計原則。
+- **建立 DESIGN.md**：使用 ui-ux-pro-max 產生設計系統，並參考 impeccable 的 palette 建議，採用 OKLCH 色彩空間，以深靛藍 `oklch(0.400 0.110 250.0)` 為主色、琥珀金 `oklch(0.650 0.140 80.0)` 為強調色。
+- **重寫樣式檔案**：
+  - `assets/css/main.css`：改用 OKLCH 變數、載入 Inter 字體、加入 `prefers-reduced-motion` 支援。
+  - `assets/css/card.css`：以 OKLCH 變數重新定義名片視覺，強化完成品質感與無障礙焦點狀態。
+  - `docs/03-ui-design.md`：同步更新為 OKLCH 色彩系統與單張名片規格。
+  - `index.html`：新增 Google Fonts 預先連線。
+
 ---
 
 ## 開發原則備註
