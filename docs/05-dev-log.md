@@ -35,6 +35,16 @@
   - 修正 skill 內 `data` 與 `scripts` 的 symlink，改為從 `src/ui-ux-pro-max/` 複製實際資料夾，避免路徑失效。
 - **測試 skill**：執行 `search.py` 與設計系統生成功能均正常運作。
 
+### 2026-06-17（續 - 單人名片 UI 完成品）
+
+- **調整為單人名片完成品 UI**：依使用者指示，將原本多名片列表改為單張個人名片展示頁面。
+  - `index.html`：更新註解、description 與副標，改為單張名片語意。
+  - `assets/css/main.css`：主內容改為 flex 置中，名片容器最大寬度 560px。
+  - `assets/css/card.css`：強化單張名片完成品視覺，加大姓名字級、調整聯絡資訊兩欄排版、加大服務標籤、強化陰影與懸停效果。
+  - `assets/js/main.js`：移除多名片陣列，改為單一 `MOCK_CARD` 物件，並新增 `renderSingleCardPage()` 渲染單張名片。
+- **不讀取 API**：頁面持續使用本地樣板資料，未串接 API。
+- **後台表單未建立**：依指示暫不設計表單。
+
 ---
 
 ## 開發原則備註

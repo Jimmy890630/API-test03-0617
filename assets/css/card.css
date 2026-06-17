@@ -9,28 +9,39 @@
   display: flex;
   flex-direction: column;
   background-color: var(--color-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--color-border);
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  height: 100%;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 /* 2. 滑鼠懸停效果：輕微上浮並加深陰影 */
 .business-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(38, 50, 56, 0.16);
 }
 
 /* 3. 卡片頂部深色區塊：公司名稱與職稱 */
 .business-card__header {
   background-color: var(--color-primary);
   color: var(--color-card);
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   position: relative;
 }
 
-/* 頂部右側的裝飾線條，增加工業感 */
+/* 頂部金色裝飾線條，象徵金屬加工的精度與品質 */
+.business-card__header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-accent), #FFCA28);
+}
+
+/* 右側裝飾線條，增加工業感 */
 .business-card__header::after {
   content: "";
   position: absolute;
@@ -56,31 +67,41 @@
 
 /* 4. 卡片主體：姓名與聯絡資訊 */
 .business-card__body {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   flex: 1;
 }
 
 .business-card__name {
-  font-size: 1.5rem;
+  font-size: 2.25rem;
   font-weight: 700;
   color: var(--color-text);
-  margin-bottom: var(--spacing-sm);
-  letter-spacing: 0.02em;
+  margin-bottom: var(--spacing-md);
+  letter-spacing: 0.03em;
+  line-height: 1.2;
 }
 
 /* 5. 聯絡資訊列表 */
 .business-card__contact-list {
   list-style: none;
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template-columns: 1fr;
+}
+
+/* 較寬螢幕時聯絡資訊兩欄排列 */
+@media (min-width: 480px) {
+  .business-card__contact-list {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .business-card__contact-item {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   color: var(--color-text-muted);
-  margin-bottom: var(--spacing-sm);
   word-break: break-all;
 }
 
@@ -110,7 +131,7 @@
 
 /* 6. 卡片底部：服務標籤與輔助資訊 */
 .business-card__footer {
-  padding: 0 var(--spacing-lg) var(--spacing-lg);
+  padding: 0 var(--spacing-xl) var(--spacing-xl);
 }
 
 /* 服務項目標籤容器 */
@@ -118,7 +139,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
 }
 
 /* 單個服務標籤 */
@@ -126,9 +147,9 @@
   display: inline-block;
   background-color: rgba(255, 179, 0, 0.12);
   color: var(--color-accent);
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 179, 0, 0.3);
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -144,9 +165,10 @@
 .business-card__meta {
   display: flex;
   flex-wrap: wrap;
+  justify-content: space-between;
   gap: var(--spacing-md);
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   color: var(--color-text-muted);
   border-top: 1px solid var(--color-border);
-  padding-top: var(--spacing-md);
+  padding-top: var(--spacing-lg);
 }

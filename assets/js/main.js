@@ -9,71 +9,22 @@
 // ============================================
 
 /**
- * 樣板名片資料陣列
+ * 單一個人名片樣板資料
+ * 此資料模擬最終要展示給他人的個人名片內容
  * 欄位定義請參考 docs/01-requirements.md 與 docs/04-api-spec.md
  */
-const MOCK_CARDS = [
-  {
-    card_id: 'card-001',
-    name: '王小明',
-    company: '金鋒金屬加工有限公司',
-    title: '業務經理',
-    phone: '0912345678',
-    email: 'ming@jingfeng.tw',
-    line_id: 'jingfeng_ming',
-    services: ['CNC 加工', '雷射切割', '焊接組裝'],
-    tax_id: '12345678',
-    fax: '0212345678'
-  },
-  {
-    card_id: 'card-002',
-    name: '陳雅芳',
-    company: '鋼藝精密工業',
-    title: '業務代表',
-    phone: '0928765432',
-    email: 'yafang@gangyi.tw',
-    line_id: 'gangyi_yafang',
-    services: ['金屬沖壓', '表面處理'],
-    tax_id: '87654321',
-    fax: ''
-  },
-  {
-    card_id: 'card-003',
-    name: '李志豪',
-    company: '銳捷切削科技',
-    title: '總經理',
-    phone: '0933567890',
-    email: 'howard@ruijie.tw',
-    line_id: 'ruijie_howard',
-    services: ['車床加工', '銑床加工', '模具開發'],
-    tax_id: '24681357',
-    fax: '0323456789'
-  },
-  {
-    card_id: 'card-004',
-    name: '張立婷',
-    company: '鐵信機械工程',
-    title: '專案管理師',
-    phone: '0911223344',
-    email: 'liting@tiexin.tw',
-    line_id: 'tiexin_liting',
-    services: ['機械組裝', '設備維修'],
-    tax_id: '13579246',
-    fax: ''
-  },
-  {
-    card_id: 'card-005',
-    name: '黃國棟',
-    company: '鑫源金屬科技有限公司',
-    title: '業務副理',
-    phone: '0955889966',
-    email: 'guodong@sinyuan.tw',
-    line_id: 'sinyuan_guodong',
-    services: ['鋁擠型加工', '陽極處理', '精密研磨'],
-    tax_id: '36925814',
-    fax: '0423456789'
-  }
-];
+const MOCK_CARD = {
+  card_id: 'card-001',
+  name: '王小明',
+  company: '金鋒金屬加工有限公司',
+  title: '業務經理',
+  phone: '0912345678',
+  email: 'ming@jingfeng.tw',
+  line_id: 'jingfeng_ming',
+  services: ['CNC 加工', '雷射切割', '焊接組裝', '金屬表面處理'],
+  tax_id: '12345678',
+  fax: '0212345678'
+};
 
 // ============================================
 // 2. 名片渲染函式
@@ -207,47 +158,11 @@ function renderCard(card) {
 }
 
 /**
- * 渲染多張名片到指定容器
- * @param {Object[]} cards - 名片資料陣列
- * @param {HTMLElement} container - 渲染目標容器
+ * 渲染單張個人名片頁面
+ * 清空名片容器並將單一名片資料渲染為完成品名片
  * @returns {void}
  */
-function renderCards(cards, container) {
-  if (!container) return;
-
-  // 清空容器現有內容
-  container.innerHTML = '';
-
-  // 若無資料，顯示提示訊息
-  if (!Array.isArray(cards) || cards.length === 0) {
-    const empty = createElement('p', {
-      className: 'card-grid__empty',
-      textContent: '目前沒有名片資料'
-    });
-    container.appendChild(empty);
-    return;
-  }
-
-  // 逐一渲染每張名片
-  cards.forEach((card) => {
-    try {
-      const cardElement = renderCard(card);
-      container.appendChild(cardElement);
-    } catch (error) {
-      console.error('渲染名片時發生錯誤：', handleError(error));
-    }
-  });
-}
-
-// ============================================
-// 3. 頁面初始化
-// ============================================
-
-/**
- * 初始化頁面：取得樣板資料並渲染名片列表
- * @returns {void}
- */
-function init() {
+function renderSingleCardPage() {
   const container = document.getElementById('cardContainer');
 
   if (!container) {
@@ -255,8 +170,29 @@ function init() {
     return;
   }
 
-  // 使用本地樣板資料直接渲染，不發送 API 請求
-  renderCards(MOCK_CARDS, container);
+  // 清空容器現有內容
+  container.innerHTML = '';
+
+  // 渲染單一張個人名片
+  try {
+    const cardElement = renderCard(MOCK_CARD);
+    container.appendChild(cardElement);
+  } catch (error) {
+    console.error('渲染名片時發生錯誤：', handleError(error));
+  }
+}
+
+// ============================================
+// 3. 頁面初始化
+// ============================================
+
+/**
+ * 初始化頁面：建立單張個人名片完成品頁面
+ * @returns {void}
+ */
+function init() {
+  // 使用本地樣板資料直接渲染單張名片，不發送 API 請求
+  renderSingleCardPage();
 }
 
 // 等待 DOM 載入完成後初始化
