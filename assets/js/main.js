@@ -10,11 +10,11 @@
 
 /**
  * 單一個人名片樣板資料
- * 此資料模擬最終要展示給他人的個人名片內容
+ * 此資料模擬後端資料庫中預先建立的唯一一筆個人名片
  * 欄位定義請參考 docs/01-requirements.md 與 docs/04-api-spec.md
+ * 個人名片系統不會有 card_id、created_at、updated_at 等欄位
  */
 const MOCK_CARD = {
-  card_id: 'card-001',
   name: '王小明',
   company: '金鋒金屬加工有限公司',
   title: '業務經理',
@@ -101,7 +101,6 @@ function renderCard(card) {
   const cardElement = createElement('article', {
     className: 'business-card business-card--animate',
     attributes: {
-      'data-card-id': safeCard.card_id || '',
       'aria-labelledby': 'cardName cardCompany'
     }
   });
