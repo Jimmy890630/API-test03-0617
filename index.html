@@ -5,7 +5,10 @@
   <!--
     金屬加工名片系統 - 入口頁
     檔案：index.html
-    用途：展示單張個人名片完成品，使用本地樣板資料渲染，不請求 API
+    用途：展示單張個人名片完成品。
+          初始化時由 assets/js/main.js 向 assets/config/api.json
+          載入 API 位址，並發送 POST action=get 請求，從後端讀取名片資料；
+          若 API 載入或解析失敗，則使用本地 Mock 資料備援渲染。
   -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="金鋒金屬加工有限公司 - 業務經理 王小明 數位名片">
