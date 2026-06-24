@@ -12,6 +12,12 @@ const form = document.getElementById('cardForm');
 const submitBtn = document.getElementById('submitBtn');
 const messageEl = document.getElementById('formMessage');
 
+/**
+ * 載入時取得的原始名片資料
+ * 用於比對哪些欄位有變更，更新時只傳送變更的欄位
+ */
+let originalCard = null;
+
 const fields = {
   name: document.getElementById('name'),
   company: document.getElementById('company'),
@@ -88,39 +94,53 @@ function formatServicesForInput(services) {
 }
 
 /**
+ * 比較兩個值是否相同
+ * 用於判斷欄位是否有變更
+ * @param {*} a - 原始值
+ * @param {*} b - 新值
+ * @returns {boolean} 相同回傳 true
+ */
+function isSameValue(a, b) {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((item, index) => item === b[index]);
+  }
+  return String(a || '') === String(b || '');
+}
+
+/**
  * 從表單收集名片資料
- * 只收集有填寫的欄位，未填寫的欄位不傳送，讓後端保留原值
+ * 只收集與原始資料不同的欄位，符合 docs/04-api-spec.md 5.2 節規範：
+ * 「data 內只需傳入要修改的欄位，未傳入的欄位保留原值」
  * @returns {Object} 要更新的名片資料
  */
 function collectFormData() {
   const data = {};
 
-  const name = fields.name.value.trim();
-  const company = fields.company.value.trim();
-  const phone = fields.phone.value.trim();
-  const email = fields.email.value.trim();
+  if (!originalCard) {
+    throw new Error('原始名片資料尚未載入，無法判斷哪些欄位有變更');
+  }
 
-  // 必填欄位一定傳送
-  data.name = name;
-  data.company = company;
-  data.phone = phone;
-  data.email = email;
+  const newValues = {
+    name: fields.name.value.trim(),
+    company: fields.company.value.trim(),
+    title: fields.title.value.trim(),
+    phone: fields.phone.value.trim(),
+    email: fields.email.value.trim(),
+    line_id: fields.line_id.value.trim(),
+    services: parseServices(fields.services.value),
+    tax_id: fields.tax_id.value.trim(),
+    fax: fields.fax.value.trim()
+  };
 
-  // 選填欄位：有填才傳送
-  const title = fields.title.value.trim();
-  if (title) data.title = title;
+  Object.entries(newValues).forEach(([key, value]) => {
+    const originalValue = originalCard[key];
 
-  const lineId = fields.line_id.value.trim();
-  if (lineId) data.line_id = lineId;
-
-  const services = parseServices(fields.services.value);
-  if (services.length > 0) data.services = services;
-
-  const taxId = fields.tax_id.value.trim();
-  if (taxId) data.tax_id = taxId;
-
-  const fax = fields.fax.value.trim();
-  if (fax) data.fax = fax;
+    // 若新值與原始值不同，則加入更新資料
+    if (!isSameValue(originalValue, value)) {
+      data[key] = value;
+    }
+  });
 
   return data;
 }
@@ -131,17 +151,19 @@ function collectFormData() {
 
 /**
  * 驗證表單資料
+ * 只驗證「有變更」的欄位，避免未修改的欄位被誤判
  * @param {Object} data - 表單資料
  * @returns {string|null} 錯誤訊息，驗證通過則回傳 null
  */
 function validateForm(data) {
-  if (!data.name) return '姓名不可空白';
-  if (!data.company) return '公司名稱不可空白';
-  if (!data.phone) return '電話不可空白';
-  if (!isValidPhone(data.phone)) return '電話格式不正確';
-  if (!data.email) return '電子信箱不可空白';
-  if (!isValidEmail(data.email)) return '電子信箱格式不正確';
-  if (data.tax_id && !/^\d{8}$/.test(data.tax_id)) return '統一編號須為 8 位數字';
+  if ('name' in data && !data.name) return '姓名不可空白';
+  if ('company' in data && !data.company) return '公司名稱不可空白';
+  if ('phone' in data && !data.phone) return '電話不可空白';
+  if ('phone' in data && !isValidPhone(data.phone)) return '電話格式不正確';
+  if ('email' in data && !data.email) return '電子信箱不可空白';
+  if ('email' in data && !isValidEmail(data.email)) return '電子信箱格式不正確';
+  if ('services' in data && (!data.services || data.services.length === 0)) return '服務項目不可空白';
+  if ('tax_id' in data && data.tax_id && !/^\d{8}$/.test(data.tax_id)) return '統一編號須為 8 位數字';
   return null;
 }
 
@@ -182,6 +204,19 @@ async function loadCardData() {
     fields.services.value = formatServicesForInput(card.services);
     fields.tax_id.value = card.tax_id || '';
     fields.fax.value = card.fax || '';
+
+    // 保存原始資料，供 collectFormData 比對變更
+    originalCard = {
+      name: card.name || '',
+      company: card.company || '',
+      title: card.title || '',
+      phone: card.phone || '',
+      email: card.email || '',
+      line_id: card.line_id || '',
+      services: Array.isArray(card.services) ? [...card.services] : (card.services ? [card.services] : []),
+      tax_id: card.tax_id || '',
+      fax: card.fax || ''
+    };
 
     clearMessage();
   } catch (error) {
