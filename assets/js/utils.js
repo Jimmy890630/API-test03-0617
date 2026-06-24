@@ -299,19 +299,15 @@ async function callApi(apiUrl, action, data = {}, timeoutMs = 0) {
   const contentType = response.headers.get('content-type') || '';
   const rawText = await response.text();
 
-  // 若回應不是 JSON，提供清楚錯誤，方便排查 Make.com 回傳 Accepted 等問題
-  if (!contentType.includes('application/json')) {
-    const snippet = rawText.trim().slice(0, 200);
-    throw new Error(
-      `API 回應格式非 JSON（Content-Type: ${contentType || '未提供'}）。原始回應：${snippet}`
-    );
-  }
-
   let result;
   try {
     result = JSON.parse(rawText);
   } catch (parseError) {
-    throw new Error(`API 回應無法解析為 JSON：${rawText.trim().slice(0, 200)}`);
+    // 若回應無法解析為 JSON，提供清楚錯誤，方便排查 Make.com 回傳 Accepted 等問題
+    const snippet = rawText.trim().slice(0, 200);
+    throw new Error(
+      `API 回應無法解析為 JSON（Content-Type: ${contentType || '未提供'}）。原始回應：${snippet}`
+    );
   }
 
   if (!response.ok) {
