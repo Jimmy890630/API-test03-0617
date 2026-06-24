@@ -218,6 +218,13 @@ function renderCard(card) {
 
   const actions = createElement('div', { className: 'business-card__actions' });
 
+  const editLink = createElement('a', {
+    className: 'business-card__action business-card__action--secondary',
+    attributes: { href: 'update.html' },
+    textContent: '編輯資料'
+  });
+  actions.appendChild(editLink);
+
   const saveButton = createElement('button', {
     className: 'business-card__action business-card__action--primary',
     attributes: { type: 'button' },
