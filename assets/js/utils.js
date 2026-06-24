@@ -260,33 +260,65 @@ async function loadApiConfig(configPath = 'assets/config/api.json') {
  * @param {string} apiUrl - API 基底位址
  * @param {string} action - 動作名稱，例如 "get"、"update"
  * @param {Object} [data={}] - 請求資料
+ * @param {number} [timeoutMs=0] - 請求逾時毫秒數，0 表示不設定逾時
  * @returns {Promise<Object>} 後端回應物件
  * @example
  * const response = await callApi(apiUrl, 'get', {});
  * if (response.status === 'success') { ... }
  */
-async function callApi(apiUrl, action, data = {}) {
+async function callApi(apiUrl, action, data = {}, timeoutMs = 0) {
+  let response;
+
   try {
-    const response = await fetch(apiUrl, {
+    const fetchOptions = {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json'
       },
       body: JSON.stringify({ action, data })
-    });
+    };
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message || `API 請求失敗：HTTP ${response.status}`);
+    if (timeoutMs > 0) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      fetchOptions.signal = controller.signal;
+      response = await fetch(apiUrl, fetchOptions);
+      clearTimeout(timeoutId);
+    } else {
+      response = await fetch(apiUrl, fetchOptions);
     }
-
-    return result;
   } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error(`API 請求逾時（超過 ${timeoutMs}ms）`);
+    }
     console.error('API 請求失敗：', handleError(error));
     throw error;
   }
+
+  const contentType = response.headers.get('content-type') || '';
+  const rawText = await response.text();
+
+  // 若回應不是 JSON，提供清楚錯誤，方便排查 Make.com 回傳 Accepted 等問題
+  if (!contentType.includes('application/json')) {
+    const snippet = rawText.trim().slice(0, 200);
+    throw new Error(
+      `API 回應格式非 JSON（Content-Type: ${contentType || '未提供'}）。原始回應：${snippet}`
+    );
+  }
+
+  let result;
+  try {
+    result = JSON.parse(rawText);
+  } catch (parseError) {
+    throw new Error(`API 回應無法解析為 JSON：${rawText.trim().slice(0, 200)}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(result.message || `API 請求失敗：HTTP ${response.status}`);
+  }
+
+  return result;
 }
 
 /**

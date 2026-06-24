@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>API Debug - 名片讀取</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 2rem; background: #f5f5f4; }
+    pre { background: #1c1917; color: #fafaf9; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; }
+    button { padding: 0.75rem 1.5rem; font-size: 1rem; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>API Debug - 名片讀取</h1>
+  <p>點擊按鈕發送與 main.js 相同的請求，並顯示請求與回應細節。</p>
+  <p><strong>請注意：</strong>Make.com 在瀏覽器請求下可能回傳 <code>Accepted</code>（text/plain），這通常表示情境執行中。新版 main.js 已加入一次重試機制。</p>
+  <button id="testBtn">發送請求</button>
+  <button id="testRetryBtn">模擬 main.js 重試流程</button>
+  <h2>結果</h2>
+  <pre id="result">尚未發送</pre>
+
+  <script>
+    async function loadConfig() {
+      const configRes = await fetch('assets/config/api.json', {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+      });
+      return await configRes.json();
+    }
+
+    async function callApiOnce(apiUrl, timeoutMs = 0) {
+      const fetchOptions = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ action: 'get', data: {} })
+      };
+
+      let response;
+      if (timeoutMs > 0) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        fetchOptions.signal = controller.signal;
+        response = await fetch(apiUrl, fetchOptions);
+        clearTimeout(timeoutId);
+      } else {
+        response = await fetch(apiUrl, fetchOptions);
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      const rawText = await response.text();
+
+      if (!contentType.includes('application/json')) {
+        const snippet = rawText.trim().slice(0, 200);
+        throw new Error(`API 回應格式非 JSON（Content-Type: ${contentType || '未提供'}）。原始回應：${snippet}`);
+      }
+
+      try {
+        return JSON.parse(rawText);
+      } catch (_) {
+        throw new Error(`API 回應無法解析為 JSON：${rawText.trim().slice(0, 200)}`);
+      }
+    }
+
+    document.getElementById('testBtn').addEventListener('click', async () => {
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = '發送中...';
+
+      try {
+        const configRes = await fetch('assets/config/api.json', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+        const config = await configRes.json();
+
+        const startTime = performance.now();
+        const apiUrl = config.apiUrl;
+        const body = JSON.stringify({ action: 'get', data: {} });
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Accept': 'application/json'
+          },
+          body
+        });
+
+        const text = await response.text();
+        const duration = (performance.now() - startTime).toFixed(2);
+
+        let parsed = null;
+        try {
+          parsed = JSON.parse(text);
+        } catch (_) {
+          parsed = '無法解析為 JSON';
+        }
+
+        resultEl.textContent = JSON.stringify({
+          apiUrl,
+          requestBody: body,
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get('content-type'),
+          durationMs: duration,
+          rawResponse: text,
+          parsedResponse: parsed
+        }, null, 2);
+      } catch (error) {
+        resultEl.textContent = JSON.stringify({
+          error: error.name,
+          message: error.message,
+          stack: error.stack
+        }, null, 2);
+      }
+    });
+    document.getElementById('testRetryBtn').addEventListener('click', async () => {
+      const resultEl = document.getElementById('result');
+      resultEl.textContent = '第一次發送中...';
+
+      try {
+        const config = await loadConfig();
+        const apiUrl = config.apiUrl;
+        const startTime = performance.now();
+
+        let response = null;
+        let attempts = [];
+
+        try {
+          response = await callApiOnce(apiUrl, 10000);
+          attempts.push({ attempt: 1, result: 'success', response });
+        } catch (firstError) {
+          attempts.push({ attempt: 1, result: 'error', message: firstError.message });
+          const msg = firstError.message || '';
+          if (msg.includes('非 JSON') || msg.includes('Accepted') || msg.includes('無法解析為 JSON')) {
+            resultEl.textContent = '第一次未拿到 JSON，等待 2 秒後重試...';
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            response = await callApiOnce(apiUrl, 10000);
+            attempts.push({ attempt: 2, result: 'success', response });
+          } else {
+            throw firstError;
+          }
+        }
+
+        const duration = (performance.now() - startTime).toFixed(2);
+
+        resultEl.textContent = JSON.stringify({
+          apiUrl,
+          durationMs: duration,
+          attempts,
+          extractedCard: (response && response.status === 'success' && response.data) ? response.data : response
+        }, null, 2);
+      } catch (error) {
+        resultEl.textContent = JSON.stringify({
+          error: error.name,
+          message: error.message,
+          stack: error.stack
+        }, null, 2);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -363,12 +363,28 @@ function renderCardPage(card) {
 
 /**
  * 初始化頁面：先嘗試從 API 讀取名片資料，失敗時使用本地 Mock 資料
+ * 若 Make.com 情境啟動較慢，會在短暫延遲後重新嘗試一次。
  * @returns {Promise<void>}
  */
 async function init() {
   try {
     const config = await loadApiConfig('assets/config/api.json');
-    const response = await callApi(config.apiUrl, 'get', {});
+
+    // 第一次嘗試：給予較長逾時（10 秒），等待 Make.com 完成 Google Sheets 讀取
+    let response = null;
+    try {
+      response = await callApi(config.apiUrl, 'get', {}, 10000);
+    } catch (firstError) {
+      const msg = handleError(firstError, '');
+      // 若後端回傳非 JSON（如 Make.com 的 "Accepted"），可能是情境尚未完成，等待後重試
+      if (msg.includes('非 JSON') || msg.includes('Accepted') || msg.includes('無法解析為 JSON')) {
+        console.warn('第一次 API 請求未拿到 JSON，等待 2 秒後重試...');
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        response = await callApi(config.apiUrl, 'get', {}, 10000);
+      } else {
+        throw firstError;
+      }
+    }
 
     const apiCard = extractCardFromResponse(response);
 
