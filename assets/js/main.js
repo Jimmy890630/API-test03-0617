@@ -296,6 +296,43 @@ function escapeHtml(text) {
 }
 
 /**
+ * 將 API 原始回應轉換為名片物件
+ * 支援多種回應形式：
+ * 1. 標準 API 格式：{ status: 'success', data: { ...名片欄位 } }
+ * 2. Make.com 常見格式：{ data: { ...名片欄位 } }
+ * 3. 扁平名片格式：{ name, company, ... } 直接為名片物件
+ * @param {Object|string} response - API 回應物件或文字
+ * @returns {Object|null} 名片物件，若無法解析則回傳 null
+ */
+function extractCardFromResponse(response) {
+  if (!response) {
+    return null;
+  }
+
+  // 純文字回應（例如 Make.com 預設回傳 "Accepted"）無法解析成名片
+  if (typeof response === 'string') {
+    return null;
+  }
+
+  let payload = response;
+
+  // 標準 API 格式：{ status: 'success', data: { ...card } }
+  if (response.status === 'success' && response.data && typeof response.data === 'object') {
+    payload = response.data;
+  } else if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+    // Make.com 常見格式：{ data: { ...card } }
+    payload = response.data;
+  }
+
+  // 此時 payload 應為名片物件：檢查必填欄位 name、company
+  if (typeof payload.name === 'string' && typeof payload.company === 'string') {
+    return payload;
+  }
+
+  return null;
+}
+
+/**
  * 渲染單張個人名片頁面
  * 清空名片容器並將單一名片資料渲染為完成品名片
  * @param {Object} [card] - 要渲染的名片資料，未提供則使用 MOCK_CARD
@@ -333,13 +370,14 @@ async function init() {
     const config = await loadApiConfig('assets/config/api.json');
     const response = await callApi(config.apiUrl, 'get', {});
 
-    if (response.status === 'success' && response.data) {
-      const apiCard = response.data;
+    const apiCard = extractCardFromResponse(response);
+
+    if (apiCard) {
       renderCardPage(apiCard);
       return;
     }
 
-    console.warn('API 回應狀態非 success，改用本地 Mock 資料');
+    console.warn('API 回應中無法解析出名片資料，改用本地 Mock 資料');
     renderCardPage(MOCK_CARD);
   } catch (error) {
     console.warn('從 API 載入名片失敗，改用本地 Mock 資料：', handleError(error));
